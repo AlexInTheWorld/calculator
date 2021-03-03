@@ -1,0 +1,247 @@
+// REACT CALCULATOR, a personal project based on FCC assignment
+
+class Display extends React.Component {
+  componentDidUpdate() {
+    // The width of the -windowDisplay- container is fixed at 360. Use of property scrollWidth of this element to 'move' its content to the left (scrollWidth - 360) units of distance (in pixels)
+    var myDiv = document.getElementsByClassName("windowDisplay")[0];
+    if (myDiv.scrollWidth > 360) {
+      myDiv.scrollLeft = myDiv.scrollWidth - 360;
+    }
+  }
+  render() {
+    return /*#__PURE__*/(
+      React.createElement("div", { id: "container" }, /*#__PURE__*/
+      React.createElement("div", { id: "display", className: "windowDisplay" }, this.props.displayOperation)));
+
+
+  }}
+
+
+class Calculator extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      buttonsPressed: '',
+      mathArray: [],
+      result: '' };
+
+    this.handleNumbers = this.handleNumbers.bind(this);
+    this.handleReset = this.handleReset.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
+    this.doMath = this.doMath.bind(this);
+    this.handleOperator = this.handleOperator.bind(this);
+    this.handleDecimals = this.handleDecimals.bind(this);
+  }
+
+  handleNumbers(event) {
+    var targetButton = event.target.textContent;
+    // If math operation outcome is displayed, overwrite it with any new numeric input. Manage new number typing vs appending digits to current number within the math array. Set limit for number of digits (10)
+    if (/\d+/.test(this.state.result)) {
+      this.setState({
+        buttonsPressed: targetButton,
+        mathArray: [...targetButton],
+        result: '' });
+
+    } else if (this.state.buttonsPressed.length === 0 || /[\D]$/.test(this.state.buttonsPressed) && this.state.buttonsPressed.slice(-1) !== "." && this.state.result === '') {
+      this.setState({
+        buttonsPressed: this.state.buttonsPressed + targetButton,
+        mathArray: [...this.state.mathArray, targetButton] });
+
+    } else if (/\d{10}$/.test(this.state.buttonsPressed) && targetButton !== ".") {
+      this.setState({
+        result: "DIGIT LIMIT EXCEEDED" });
+
+    } else if (this.state.result === '') {
+      if (this.state.mathArray.slice(-1).toString() === "0") {
+        this.setState({
+          buttonsPressed: this.state.buttonsPressed.slice(0, -1) + targetButton,
+          mathArray: [...this.state.mathArray.slice(0, -1), targetButton] });
+
+      } else {
+        this.setState({
+          buttonsPressed: this.state.buttonsPressed + targetButton,
+          mathArray: [...this.state.mathArray.slice(0, -1), this.state.mathArray.slice(-1).toString() + targetButton] });
+
+      }
+    }
+  }
+
+  handleReset() {
+    // Button -reset- sets all anew, return to initial conditions (when first time rendered)
+    this.setState({
+      buttonsPressed: '',
+      mathArray: [],
+      result: '' });
+
+  }
+
+  handleDelete() {
+    // Use of the -delete- button to come back to the previous math operation input, then compare the length of the last item in the Math array and decide wether to delete it whole or slice it
+    if (this.state.result !== '') {
+      this.setState({
+        result: '' });
+
+    } else if (this.state.mathArray.slice(-1).toString().length > 1) {
+      this.setState({
+        buttonsPressed: this.state.buttonsPressed.slice(0, -1),
+        mathArray: [...this.state.mathArray.slice(0, -1), this.state.mathArray.slice(-1).toString().slice(0, -1)] });
+
+    } else {
+      this.setState({
+        buttonsPressed: this.state.buttonsPressed.slice(0, -1),
+        mathArray: this.state.mathArray.slice(0, -1) });
+
+    }
+  }
+
+  handleDecimals(event) {
+    var targetButton = event.target.textContent;
+    if (/\d+/.test(this.state.result)) {
+      this.setState({
+        buttonsPressed: targetButton,
+        mathArray: [...targetButton],
+        result: '' });
+
+    } else if (this.state.buttonsPressed.length === 0 || /[\D]$/.test(this.state.buttonsPressed) && this.state.buttonsPressed.slice(-1) !== "." && this.state.result === '') {
+      this.setState({
+        buttonsPressed: this.state.buttonsPressed + targetButton,
+        mathArray: [...this.state.mathArray, targetButton] });
+
+    } else if (this.state.buttonsPressed.slice(-1) !== "." && this.state.result === '') {
+      this.setState({
+        buttonsPressed: this.state.buttonsPressed + targetButton,
+        mathArray: [...this.state.mathArray.slice(0, -1), this.state.mathArray.slice(-1).toString() + targetButton] });
+
+    }
+  }
+
+  handleOperator(event) {
+    // If math operation outcome is displayed, use it as the new -string- & -item in math array- to write the next math exp. Otherwise, keep inserting '+' & '-'
+    var targetButton = event.target.textContent;
+    if (/\d+/.test(this.state.result)) {
+      this.setState({
+        buttonsPressed: this.state.result + targetButton,
+        mathArray: [this.state.result, targetButton],
+        result: '' });
+
+    } else if (this.state.result === '' && (targetButton === "/" || targetButton === "x") && this.state.buttonsPressed.slice(-1) !== ".") {
+      if (/[\d][\D]$/.test(this.state.buttonsPressed)) {
+        this.setState({
+          buttonsPressed: this.state.buttonsPressed.slice(0, -1) + targetButton,
+          mathArray: [...this.state.mathArray.slice(0, -1), targetButton] });
+
+      } else if (/[\d]$/.test(this.state.buttonsPressed)) {
+        this.setState({
+          buttonsPressed: this.state.buttonsPressed + targetButton,
+          mathArray: [...this.state.mathArray, targetButton] });
+
+      }
+    } else if ((/[\d][\D]$|[\d]$/.test(this.state.buttonsPressed) || this.state.buttonsPressed.length < 2) && this.state.result === '' && targetButton !== "x" && targetButton !== "/" && this.state.buttonsPressed.slice(-1) !== ".") {
+      this.setState({
+        buttonsPressed: this.state.buttonsPressed + targetButton,
+        mathArray: [...this.state.mathArray, targetButton] });
+
+    }
+  }
+  doMath() {
+    // Use of the math array to evaluate input expression. -eval- function not used.
+    var resultArr = this.state.mathArray;
+    if (/[\D]$/.test(resultArr)) {
+      this.setState({
+        result: "Syntax Error" });
+
+    } else if (resultArr.length > 0) {
+      // In the array number as strings will be converted to numbers, and operators as strings will be used as tokens to do one mathematical operation at a time. The result is inserted in the array where affected operands were. The loop continues until the array only contains one item: the result of the mathematical expression.
+      while (resultArr.length > 1) {
+        var calculate = function (operatorIndex, myArr) {
+          var operand1 = myArr[operatorIndex - 1];
+          var operand2 = myArr[operatorIndex + 1];
+          if (operand2 === "x" || operand2 === "-" || operand2 === "/" || operand2 === "+") {
+            operand2 = Number(myArr[operatorIndex + 2]) * Number(operand2 + 1);
+            myArr.splice(operatorIndex + 1, 2, operand2);
+          }
+          if (operatorIndex === 0) {
+            operand1 = 0;
+          }
+          var operationResult = 0;
+          switch (myArr[operatorIndex]) {
+            case "x":
+              operationResult = Number(operand1) * Number(operand2);
+              break;
+            case "/":
+              operationResult = Number(operand1) / Number(operand2);
+              break;
+            case "+":
+              operationResult = Number(operand1) + Number(operand2);
+              break;
+            case "-":
+              operationResult = Number(operand1) - Number(operand2);
+              break;}
+
+
+          if (operatorIndex === 0) {
+            myArr.splice(operatorIndex, 3, operationResult);
+          } else {
+            myArr.splice(operatorIndex - 1, 3, operationResult);
+          }
+        };
+        var minusIndex = resultArr.indexOf("-");
+        var plusIndex = resultArr.indexOf("+");
+        var multiplyIndex = resultArr.indexOf("x");
+        var divideIndex = resultArr.indexOf("/");
+        if (multiplyIndex >= 0 || divideIndex >= 0) {
+          if (multiplyIndex !== -1) {
+            calculate(multiplyIndex, resultArr);
+          } else {
+            calculate(divideIndex, resultArr);
+          }
+        } else if (plusIndex >= 0 || minusIndex >= 0) {
+          if (Math.min(plusIndex, minusIndex) === plusIndex && plusIndex >= 0 || plusIndex >= 0 && minusIndex < 0) {
+            calculate(plusIndex, resultArr);
+          } else if (Math.min(plusIndex, minusIndex) === minusIndex && minusIndex >= 0 || minusIndex >= 0 && plusIndex < 0) {
+            calculate(minusIndex, resultArr);
+          }
+        }
+      }
+      this.setState({
+        result: Math.round(1000000000000 * resultArr[0]) / 1000000000000 });
+
+    }
+  }
+
+  render() {
+    var message;
+    if (this.state.result !== '') {
+      message = /*#__PURE__*/React.createElement(Display, { displayOperation: this.state.result });
+    } else {
+      message = /*#__PURE__*/React.createElement(Display, { displayOperation: this.state.buttonsPressed });
+    }
+    return /*#__PURE__*/(
+      React.createElement("div", { id: "math-pad" },
+      message, /*#__PURE__*/
+      React.createElement("button", { id: "seven", onClick: this.handleNumbers }, "7"), /*#__PURE__*/
+      React.createElement("button", { id: "eight", onClick: this.handleNumbers }, "8"), /*#__PURE__*/
+      React.createElement("button", { id: "nine", onClick: this.handleNumbers }, "9"), /*#__PURE__*/
+      React.createElement("button", { id: "clear", className: "modify", onClick: this.handleReset }, "AC"), /*#__PURE__*/
+      React.createElement("button", { id: "four", onClick: this.handleNumbers }, "4"), /*#__PURE__*/
+      React.createElement("button", { id: "five", onClick: this.handleNumbers }, "5"), /*#__PURE__*/
+      React.createElement("button", { id: "six", onClick: this.handleNumbers }, "6"), /*#__PURE__*/
+      React.createElement("button", { id: "delete", className: "modify", onClick: this.handleDelete }, "DEL"), /*#__PURE__*/
+      React.createElement("button", { id: "one", onClick: this.handleNumbers }, "1"), /*#__PURE__*/
+      React.createElement("button", { id: "two", onClick: this.handleNumbers }, "2"), /*#__PURE__*/
+      React.createElement("button", { id: "three", onClick: this.handleNumbers }, "3"), /*#__PURE__*/
+      React.createElement("button", { id: "zero", onClick: this.handleNumbers }, "0"), /*#__PURE__*/
+      React.createElement("button", { id: "decimal", onClick: this.handleDecimals }, "."), /*#__PURE__*/
+      React.createElement("button", { id: "add", onClick: this.handleOperator }, "+"), /*#__PURE__*/
+      React.createElement("button", { id: "multiply", onClick: this.handleOperator }, "x"), /*#__PURE__*/
+      React.createElement("button", { id: "substract", onClick: this.handleOperator }, "-"), /*#__PURE__*/
+      React.createElement("button", { id: "divide", onClick: this.handleOperator }, "/"), /*#__PURE__*/
+      React.createElement("button", { id: "equals", onClick: this.doMath }, "="), /*#__PURE__*/
+      React.createElement("p", null, "CUBE Power\xAE")));
+
+
+  }}
+
+
+ReactDOM.render( /*#__PURE__*/React.createElement(Calculator, null), document.querySelector("#root"));
